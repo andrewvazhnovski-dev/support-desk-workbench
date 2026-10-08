@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { createAppServer } from "../server/app.ts";
-import { mkdir } from "node:fs/promises";
+import { mkdir, readFile } from "node:fs/promises";
 import { chromium } from "playwright";
 
 const server = createAppServer();
