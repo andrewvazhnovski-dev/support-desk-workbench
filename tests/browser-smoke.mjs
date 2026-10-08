@@ -76,7 +76,7 @@ try {
     .click();
   await page
     .getByRole("dialog")
-    .getByLabel("Status", { exact: true })
+    .getByRole("combobox", { name: "Status", exact: true })
     .selectOption("In progress");
   await page
     .getByRole("dialog")
@@ -207,7 +207,7 @@ try {
     .click();
   await blockedStorage
     .getByRole("dialog")
-    .getByLabel("Status", { exact: true })
+    .getByRole("combobox", { name: "Status", exact: true })
     .selectOption("Resolved");
   await blockedStorage.getByRole("alert").waitFor();
   assert.match(
