@@ -4,6 +4,10 @@ A React and TypeScript interface for triaging support requests. Open a request, 
 
 This is an independent portfolio project with fictional customers. It is not client work and does not connect to a support provider.
 
+[Open the live demo](https://andrewvazhnovski-dev.github.io/support-desk-workbench/)
+
+![Request queue](docs/workspace.jpg)
+
 ## Try the workflow
 
 1. Search for **Maya**, then open the matching checkout request.
@@ -52,7 +56,7 @@ The domain tests cover composed filters, URL encoding, ordering, immutable updat
 src/domain/tickets.ts        Types, filters, updates and import contract
 src/domain/seed.ts           Fictional sample requests
 src/useWorkspace.ts          Browser persistence and error reporting
-src/components/              Ticket and import dialogs
+src/components/              Queue controls, table and dialogs
 src/App.tsx                  Queue state and workspace composition
 tests/                       Domain and browser tests
 ```
