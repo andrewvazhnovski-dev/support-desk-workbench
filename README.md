@@ -4,7 +4,7 @@ A React and TypeScript interface for triaging support requests. Open a request, 
 
 This is an independent portfolio project with fictional customers. It is not client work and does not connect to a support provider.
 
-[Open the live demo](https://andrewvazhnovski-dev.github.io/support-desk-workbench/)
+[Open the live demo](https://flankero-dev.github.io/support-desk-workbench/)
 
 ![Request queue](docs/workspace.jpg)
 
