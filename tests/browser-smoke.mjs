@@ -1,35 +1,9 @@
 import assert from "node:assert/strict";
-import { createServer } from "node:http";
-import { readFile, mkdir } from "node:fs/promises";
-import { resolve, extname } from "node:path";
+import { createAppServer } from "../server/app.ts";
+import { mkdir } from "node:fs/promises";
 import { chromium } from "playwright";
 
-const root = resolve("dist");
-const server = createServer(async (request, response) => {
-  const path = resolve(
-    root,
-    `.${new URL(request.url, "http://localhost").pathname}`,
-  );
-  if (path !== root && !path.startsWith(`${root}/`)) {
-    response.writeHead(403).end();
-    return;
-  }
-  try {
-    const file = path === root ? resolve(root, "index.html") : path;
-    const types = {
-      ".html": "text/html",
-      ".css": "text/css",
-      ".js": "text/javascript",
-    };
-    response.setHeader(
-      "Content-Type",
-      types[extname(file)] ?? "application/octet-stream",
-    );
-    response.end(await readFile(file));
-  } catch {
-    response.writeHead(404).end();
-  }
-});
+const server = createAppServer();
 await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
 const url = `http://127.0.0.1:${server.address().port}`;
 const browser = await chromium.launch({
@@ -231,6 +205,26 @@ try {
   await secondTab.getByRole("button", { name: requestName, exact: true }).click();
   assert.equal(await secondTab.getByRole("dialog").getByRole("combobox", { name: "Status", exact: true }).inputValue(), "Resolved");
   await shared.close();
+  const apiPage = await browser.newPage();
+  apiPage.on("pageerror", error => errors.push(error.message));
+  await apiPage.goto(url);
+  await apiPage.getByRole("button", { name: "Server snapshot", exact: true }).click();
+  await apiPage.getByRole("button", { name: "Refresh server copy", exact: true }).click();
+  await apiPage.getByText("Server copy loaded for comparison.", { exact: false }).waitFor();
+  // A second client saves after the browser has loaded revision 1.
+  const staleRevision = await fetch(`${url}/api/workspace`);
+  await fetch(`${url}/api/workspace`, { method: "PUT", headers: { "Content-Type": "application/json", "If-Match": staleRevision.headers.get("ETag") }, body: await staleRevision.text() });
+  await apiPage.getByRole("button", { name: "Save browser copy to server", exact: true }).click();
+  assert.match(await apiPage.getByRole("alert").innerText(), /server copy changed/);
+  assert.equal(await apiPage.getByRole("button", { name: "Save browser copy to server", exact: true }).isDisabled(), true);
+  await apiPage.getByRole("button", { name: "Refresh server copy", exact: true }).click();
+  await apiPage.getByText("Server copy loaded for comparison.", { exact: false }).waitFor();
+  await apiPage.getByRole("button", { name: "Save browser copy to server", exact: true }).click();
+  await apiPage.getByText("Saved to SQLite.", { exact: false }).waitFor();
+  await apiPage.screenshot({ path: "docs/server-snapshot.png" });
+  await apiPage.getByRole("button", { name: "Replace browser copy with server copy", exact: true }).click();
+  assert.equal(await apiPage.getByRole("dialog").count(), 0);
+  await apiPage.close();
   assert.deepEqual(errors, []);
   console.log(
     "Browser smoke passed: pagination, URL filters, ticket editing, notes, focus, persistence, bulk update, empty state, import/export, reset, keyboard shortcut, mobile layout, corrupt and blocked storage.",
