@@ -20,7 +20,7 @@ import "./styles.css";
 
 const pageSize = 8;
 export default function App() {
-  const { tickets, setTickets, storageWarning } = useWorkspace();
+  const { tickets, setTickets, storageWarning, storageConflict } = useWorkspace();
   const [filters, setFilters] = useState(() =>
     readFilters(window.location.search),
   );
@@ -174,6 +174,7 @@ export default function App() {
         {storageWarning && (
           <p role="alert" className="warning">
             {storageWarning}
+            {storageConflict && <button onClick={() => window.location.reload()}>Reload saved workspace</button>}
           </p>
         )}
         <section className="metrics" aria-label="Queue overview">

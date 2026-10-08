@@ -1,36 +1,51 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createSeed } from "./domain/seed.ts";
 import { exportTickets, parseImport } from "./domain/tickets.ts";
 const storageKey = "support-desk-workbench:v1";
-
+const conflictMessage = "Another tab changed this workspace. Saving here is paused to protect those changes. Export this tab if needed, then reload to use the saved workspace.";
 function load() {
+  let saved: string | null = null;
   try {
-    const saved = localStorage.getItem(storageKey);
-    return { tickets: saved ? parseImport(saved) : createSeed(), warning: "" };
+    saved = localStorage.getItem(storageKey);
+    return { tickets: saved ? parseImport(saved) : createSeed(), warning: "", saved };
   } catch {
-    return {
-      tickets: createSeed(),
-      warning:
-        "Saved workspace could not be loaded. Showing sample data; export a backup before closing.",
-    };
+    return { tickets: createSeed(), saved, warning: "Saved workspace could not be loaded. Showing sample data; export a backup before closing." };
   }
 }
 export function useWorkspace() {
   const [initial] = useState(load);
   const [tickets, setTickets] = useState(initial.tickets);
   const [storageWarning, setStorageWarning] = useState(initial.warning);
+  const [storageConflict, setStorageConflict] = useState(false);
+  const lastSaved = useRef(initial.saved);
+  const blocked = useRef(false);
   useEffect(() => {
-    // Do not overwrite an unreadable saved workspace just by opening the app.
-    if (tickets === initial.tickets) return;
+    const onStorage = (event: StorageEvent) => {
+      if ((event.key === storageKey || event.key === null) && event.storageArea === localStorage && event.newValue !== lastSaved.current) {
+        blocked.current = true;
+        setStorageConflict(true);
+        setStorageWarning(conflictMessage);
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
+  useEffect(() => {
+    if (tickets === initial.tickets || blocked.current) return;
     try {
-      localStorage.setItem(storageKey, exportTickets(tickets));
+      // Recheck immediately before writing, even if the storage event has not arrived.
+      if (localStorage.getItem(storageKey) !== lastSaved.current) {
+        blocked.current = true;
+        queueMicrotask(() => { setStorageConflict(true); setStorageWarning(conflictMessage); });
+        return;
+      }
+      const saved = exportTickets(tickets);
+      localStorage.setItem(storageKey, saved);
+      lastSaved.current = saved;
+      queueMicrotask(() => setStorageWarning(""));
     } catch {
-      queueMicrotask(() =>
-        setStorageWarning(
-          "Browser storage is unavailable or full. Changes work in this tab only; export a backup.",
-        ),
-      );
+      queueMicrotask(() => setStorageWarning("Browser storage is unavailable or full. Changes work in this tab only; export a backup."));
     }
   }, [tickets, initial.tickets]);
-  return { tickets, setTickets, storageWarning };
+  return { tickets, setTickets, storageWarning, storageConflict };
 }
