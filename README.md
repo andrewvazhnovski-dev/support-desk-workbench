@@ -65,10 +65,29 @@ Domain functions do not depend on React or browser APIs. Incoming data is valida
 
 ## Scope and tradeoffs
 
-The sample is intentionally a frontend application. There is no backend, sign-in, role-based access, shared database or external email delivery. Notes and status changes are records in this browser, not messages to real customers. Activity is useful local history, not a tamper-proof audit log.
+The hosted demo is a frontend application. An optional loopback server provides SQLite snapshots for local use; it is described below. There is no sign-in, role-based access or external email delivery. Notes and status changes are records in this browser, not messages to real customers. Activity is useful local history, not a tamper-proof audit log.
 
 Storage is scoped to the origin and browser profile. Clearing site data removes it. Export before switching browsers. If saved data is unreadable, opening the app leaves those saved bytes intact; a visible warning accompanies the fallback sample workspace. Subsequent edits replace that local workspace. Storage write failures are also reported rather than silently treated as saved.
 
 Imports replace the workspace after validation, with a warning in the dialog. The limits are 500 requests and 2 million JSON characters. The app is intended for a small queue; it does not claim large-dataset performance or screen-reader certification. Multiple tabs do not merge edits: if another tab updates storage, saving in a stale tab is paused. Export any unsaved changes, then use “Reload saved workspace” to load the saved version.
 
 For a shared service, the next step would be an API-backed repository, server-side authorization and optimistic concurrency checks. Adding a fake authentication screen would not provide those guarantees.
+
+## Optional SQLite server snapshots
+
+The hosted GitHub Pages demo remains a browser-only workspace. The repository also includes a loopback Node.js server that serves the built frontend and stores a versioned workspace snapshot in SQLite. No account, external database or paid service is required.
+
+```sh
+npm ci
+npm run build
+npm run start
+# Open http://127.0.0.1:3000
+```
+
+Open **Server snapshot** and choose **Refresh server copy**. This reads the saved revision without changing browser data. **Save browser copy to server** sends a validated JSON document with `If-Match`; a conditional SQL update rejects a stale revision with HTTP 412. Refresh and compare before choosing which copy to keep. **Replace browser copy with server copy** is an explicit replacement; export a backup first.
+
+`GET /api/workspace` returns the versioned document and an ETag. `PUT /api/workspace` requires JSON and the last loaded ETag. Invalid documents, duplicate IDs, missing revisions and cross-origin writes do not update the snapshot. The local database is `data/workspace.sqlite` and is excluded from git.
+
+The API integration tests use real HTTP and temporary SQLite databases. They cover persistence across restart, concurrent writes, rejected input and request size limits. The Playwright test runs against this server and verifies stale-write feedback, refresh, save and replacement through the UI.
+
+This is a local development/reference server, bound to 127.0.0.1. It deliberately has no user accounts, permissions or multi-tenant data isolation. Do not expose it as a public service; a hosted version would need authentication, authorization, managed storage and operational controls. It is evidence of a working HTTP/SQL flow, not a claim of production infrastructure experience.
