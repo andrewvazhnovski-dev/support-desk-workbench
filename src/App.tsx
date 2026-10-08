@@ -16,6 +16,7 @@ import { createSeed } from "./domain/seed.ts";
 import { useWorkspace } from "./useWorkspace.ts";
 import { TicketDialog } from "./components/TicketDialog.tsx";
 import { ImportDialog } from "./components/ImportDialog.tsx";
+import { ServerSnapshotDialog } from "./components/ServerSnapshotDialog.tsx";
 import "./styles.css";
 
 const pageSize = 8;
@@ -28,6 +29,7 @@ export default function App() {
   const [selected, setSelected] = useState<string[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
+  const [serverSnapshotOpen, setServerSnapshotOpen] = useState(false);
   const [bulkStatus, setBulkStatus] = useState<Status>("In progress");
   const [message, setMessage] = useState("");
   const searchRef = useRef<HTMLInputElement>(null);
@@ -165,6 +167,7 @@ export default function App() {
             <p>Triage requests, keep context and move work forward.</p>
           </div>
           <div className="header-actions">
+            <button onClick={() => setServerSnapshotOpen(true)}>Server snapshot</button>
             <button onClick={() => setImporting(true)}>Import JSON</button>
             <button onClick={exportData}>
               Export workspace <span aria-hidden="true">↗</span>
@@ -331,6 +334,7 @@ export default function App() {
           }
         />
       )}
+      {serverSnapshotOpen && <ServerSnapshotDialog tickets={tickets} onClose={() => setServerSnapshotOpen(false)} onLoad={(next) => { setTickets(next); setSelected([]); setPage(1); setActiveId(null); setMessage("Loaded server snapshot into this browser."); }} />}
       {importing && (
         <ImportDialog
           onClose={() => setImporting(false)}
