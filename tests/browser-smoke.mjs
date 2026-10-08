@@ -214,6 +214,23 @@ try {
     await blockedStorage.getByRole("alert").innerText(),
     /storage is unavailable/,
   );
+  const shared = await browser.newContext();
+  const firstTab = await shared.newPage();
+  const secondTab = await shared.newPage();
+  await firstTab.goto(url);
+  await secondTab.goto(url);
+  const requestName = "Checkout returns to cart after address edit";
+  await firstTab.getByRole("button", { name: requestName, exact: true }).click();
+  await firstTab.getByRole("dialog").getByRole("combobox", { name: "Status", exact: true }).selectOption("Resolved");
+  await secondTab.getByRole("alert").waitFor();
+  assert.match(await secondTab.getByRole("alert").innerText(), /Another tab/);
+  await secondTab.getByRole("button", { name: requestName, exact: true }).click();
+  await secondTab.getByRole("dialog").getByRole("combobox", { name: "Status", exact: true }).selectOption("Waiting");
+  await secondTab.getByRole("button", { name: "Close ticket", exact: true }).click();
+  await secondTab.getByRole("button", { name: "Reload saved workspace", exact: true }).click();
+  await secondTab.getByRole("button", { name: requestName, exact: true }).click();
+  assert.equal(await secondTab.getByRole("dialog").getByRole("combobox", { name: "Status", exact: true }).inputValue(), "Resolved");
+  await shared.close();
   assert.deepEqual(errors, []);
   console.log(
     "Browser smoke passed: pagination, URL filters, ticket editing, notes, focus, persistence, bulk update, empty state, import/export, reset, keyboard shortcut, mobile layout, corrupt and blocked storage.",
