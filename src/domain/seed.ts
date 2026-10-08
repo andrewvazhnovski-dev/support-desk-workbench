@@ -180,7 +180,7 @@ export function createSeed(): Ticket[] {
       index,
     ) => {
       const createdAt = new Date(
-        Date.UTC(2026, 9, 8, 9, 0) - index * 3_600_000,
+        Date.UTC(2026, 9, 7, 9, 0) - index * 3_600_000,
       ).toISOString();
       return {
         id: `SD-${1042 - index}`,
