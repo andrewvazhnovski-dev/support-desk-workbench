@@ -347,7 +347,7 @@ main {
   border: 1px solid #e3e7df;
   border-radius: 3px;
   padding: 0 5px;
-  color: #939d91;
+  color: #64705c;
 }
 .filters .clear {
   font-size: 12px;
@@ -365,7 +365,7 @@ table {
 }
 thead {
   background: #f8faf6;
-  color: #8c968a;
+  color: #64705c;
   font-size: 10px;
   letter-spacing: 0.5px;
   text-transform: uppercase;
@@ -398,7 +398,7 @@ tr:hover td {
 .mono {
   font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
   font-size: 10px;
-  color: #95a18f;
+  color: #64705c;
   letter-spacing: 0.3px;
 }
 .request-title {
@@ -420,7 +420,7 @@ tr:hover td {
 }
 .request-meta {
   margin-top: 5px;
-  color: #8a9685;
+  color: #64705c;
   font-size: 11px;
   padding-left: 64px;
 }
@@ -507,7 +507,7 @@ tr:hover td {
 }
 td time {
   font-size: 11px;
-  color: #8a9782;
+  color: #64705c;
 }
 .pagination {
   padding: 14px 20px;
@@ -516,7 +516,7 @@ td time {
   align-items: center;
   justify-content: space-between;
   font-size: 11px;
-  color: #8b9883;
+  color: #64705c;
 }
 .pagination > div {
   display: flex;
@@ -530,7 +530,7 @@ td time {
 .workspace-footer {
   text-align: center;
   font-size: 10px;
-  color: #8b9588;
+  color: #64705c;
   padding: 20px 0 0;
 }
 .bulk-bar {
@@ -640,7 +640,7 @@ dialog::backdrop {
 }
 .activity time {
   font-size: 10px;
-  color: #86927f;
+  color: #64705c;
 }
 .dialog-body form > label {
   margin-bottom: 5px;
@@ -655,7 +655,7 @@ dialog::backdrop {
 }
 .note-actions > span {
   margin-right: auto;
-  color: #899583;
+  color: #64705c;
   font-size: 11px;
 }
 .dialog-actions button {
