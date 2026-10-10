@@ -37,11 +37,29 @@ try {
   await page.getByRole("textbox", { name: "Search requests" }).fill("MAYA");
   assert.equal(await page.locator("tbody tr").count(), 1);
   assert.match(page.url(), /q=MAYA/);
+  await page.getByLabel("New view name").fill("Maya requests");
+  await page.getByRole("button", { name: "Save view", exact: true }).click();
+  assert.equal(await page.getByLabel("Saved view", { exact: true }).inputValue(), "Maya requests");
   await page.reload();
   assert.equal(
     await page.getByRole("textbox", { name: "Search requests" }).inputValue(),
     "MAYA",
   );
+  await page.getByRole("button", { name: "Clear", exact: true }).click();
+  assert.equal(await page.getByLabel("Saved view", { exact: true }).inputValue(), "");
+  await page.getByLabel("Saved view", { exact: true }).selectOption("Maya requests");
+  assert.equal(await page.locator("tbody tr").count(), 1);
+  assert.equal(await page.getByLabel("Search requests").inputValue(), "MAYA");
+  await page.getByLabel("New view name").fill("Same filters");
+  await page.getByRole("button", { name: "Save view", exact: true }).click();
+  assert.match(await page.getByRole("alert").innerText(), /already saved/);
+  // An error must not add a second view or erase the original.
+  assert.equal(await page.locator("#saved-view option").count(), 2);
+  await page.reload();
+  await page.getByRole("button", { name: "Remove saved view Maya requests", exact: true }).click();
+  assert.equal(await page.locator("#saved-view option").count(), 1);
+  await page.reload();
+  assert.equal(await page.locator("#saved-view option").count(), 1);
   await page
     .getByRole("button", {
       name: "Checkout returns to cart after address edit",
@@ -137,6 +155,12 @@ try {
     isMobile: true,
   });
   await mobile.goto(url);
+  await mobile.getByLabel("Search requests").fill("MAYA");
+  await mobile.getByLabel("New view name").fill("Mobile triage view");
+  await mobile.getByRole("button", { name: "Save view", exact: true }).click();
+  await mobile.getByRole("button", { name: "Clear", exact: true }).click();
+  await mobile.getByLabel("Saved view", { exact: true }).selectOption("Mobile triage view");
+  assert.equal(await mobile.locator("tbody tr").count(), 1);
   assert.equal(
     await mobile.evaluate(
       () => document.documentElement.scrollWidth <= innerWidth,
@@ -193,6 +217,17 @@ try {
   const secondTab = await shared.newPage();
   await firstTab.goto(url);
   await secondTab.goto(url);
+  await firstTab.getByLabel("Search requests").fill("MAYA");
+  await firstTab.getByLabel("New view name").fill("From first tab");
+  await firstTab.getByRole("button", { name: "Save view", exact: true }).click();
+  await secondTab.locator("#saved-view option[value='From first tab']").waitFor({ state: "attached" });
+  await secondTab.getByLabel("Search requests").fill("shipping");
+  await secondTab.getByLabel("New view name").fill("From second tab");
+  await secondTab.getByRole("button", { name: "Save view", exact: true }).click();
+  await firstTab.locator("#saved-view option[value='From second tab']").waitFor({ state: "attached" });
+  assert.equal(await firstTab.locator("#saved-view option").count(), 3);
+  await firstTab.getByRole("button", { name: "Clear", exact: true }).click();
+  await secondTab.getByRole("button", { name: "Clear", exact: true }).click();
   const requestName = "Checkout returns to cart after address edit";
   await firstTab.getByRole("button", { name: requestName, exact: true }).click();
   await firstTab.getByRole("dialog").getByRole("combobox", { name: "Status", exact: true }).selectOption("Resolved");
@@ -205,6 +240,20 @@ try {
   await secondTab.getByRole("button", { name: requestName, exact: true }).click();
   assert.equal(await secondTab.getByRole("dialog").getByRole("combobox", { name: "Status", exact: true }).inputValue(), "Resolved");
   await shared.close();
+  const corruptViews = await browser.newPage();
+  await corruptViews.addInitScript(() => localStorage.setItem("support-desk-views:v1", "{broken"));
+  await corruptViews.goto(url);
+  await corruptViews.getByLabel("New view name").fill("Must not overwrite");
+  await corruptViews.getByRole("button", { name: "Save view", exact: true }).click();
+  assert.equal(await corruptViews.evaluate(() => localStorage.getItem("support-desk-views:v1")), "{broken");
+  assert.match(await corruptViews.locator(".view-error").innerText(), /Could not save views/);
+  const blockedViews = await browser.newPage();
+  await blockedViews.addInitScript(() => { Storage.prototype.setItem = () => { throw new Error("storage blocked"); }; });
+  await blockedViews.goto(url);
+  await blockedViews.getByLabel("New view name").fill("Cannot save");
+  await blockedViews.getByRole("button", { name: "Save view", exact: true }).click();
+  assert.match(await blockedViews.locator(".view-error").innerText(), /storage blocked/);
+  assert.equal(await blockedViews.locator("#saved-view option").count(), 1);
   const apiPage = await browser.newPage();
   apiPage.on("pageerror", error => errors.push(error.message));
   await apiPage.goto(url);
@@ -227,7 +276,7 @@ try {
   await apiPage.close();
   assert.deepEqual(errors, []);
   console.log(
-    "Browser smoke passed: pagination, URL filters, ticket editing, notes, focus, persistence, bulk update, empty state, import/export, reset, keyboard shortcut, mobile layout, corrupt and blocked storage.",
+    "Browser smoke passed: pagination, URL filters, saved views (reload, apply, duplicate, removal, two tabs, corrupt and blocked storage), ticket editing, notes, focus, persistence, bulk update, empty state, import/export, reset, keyboard shortcut, mobile layout and server snapshots.",
   );
 } finally {
   await browser.close();

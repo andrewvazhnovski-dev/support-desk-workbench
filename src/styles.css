@@ -842,3 +842,32 @@ dialog::backdrop {
     scroll-behavior: auto !important;
   }
 }
+.saved-views {
+  padding: 0 24px 16px;
+  border-bottom: 1px solid #e7ece5;
+}
+.saved-views-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.saved-views-controls > label {
+  font-size: 12px;
+  color: #586553;
+}
+.saved-views-controls select { max-width: 240px; }
+.saved-views-controls form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-left: auto;
+}
+.saved-views-controls input { width: 195px; }
+.view-error { margin: 8px 0 0; font-size: 12px; color: #9a3528; }
+@media (max-width: 650px) {
+  .saved-views { padding: 0 14px 14px; }
+  .saved-views-controls form { margin-left: 0; width: 100%; }
+  .saved-views-controls input { flex: 1; width: 100px; min-width: 0; }
+  .saved-views-controls select { flex: 1; min-width: 0; }
+}

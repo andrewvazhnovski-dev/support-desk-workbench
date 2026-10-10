@@ -15,6 +15,7 @@ This is an independent portfolio project with fictional customers. It is not cli
 3. Reload the page: the search is in the URL, and the ticket edits remain in browser storage.
 4. Clear the filters, select several requests, and apply a status in one operation.
 5. Export the workspace. Reset the sample data, then import the export to restore your work.
+6. Set a priority and owner filter, name it, and click **Save view**. Clear the filters, then choose the saved view to restore the complete queue configuration.
 
 The sidebar and filters compose: selecting “Waiting” does not silently discard an existing priority filter. The queue shows an explicit empty state when their combination has no results.
 
@@ -22,6 +23,7 @@ The sidebar and filters compose: selecting “Waiting” does not silently disca
 
 - Search across request IDs, titles and customer names; filter by status, priority and owner.
 - URL query parameters encode filters so a queue view can be bookmarked. Ticket data itself stays local.
+- Up to eight named queue views persist search, status, priority, owner and sort order. Duplicate names and filter sets are rejected; applying a view resets pagination and selection.
 - Priority and timestamp sorting, pagination, per-row selection and bulk status updates.
 - Request details, editable fields and chronological activity records.
 - Versioned browser persistence and validated JSON import/export.
@@ -48,13 +50,14 @@ npx playwright install chromium
 npm run test:browser
 ```
 
-The domain tests cover composed filters, URL encoding, ordering, immutable updates, activity history and import validation. The browser smoke test serves the production build and checks the user workflow, reload persistence, modal focus, import/export, mobile overflow and storage failures. It also produces screenshots in `docs/`.
+The domain tests cover composed filters, URL encoding, ordering, immutable updates, activity history, import validation and saved-view validation. The browser smoke test serves the production build and checks the user workflow, reload persistence, modal focus, import/export, mobile overflow and storage failures. Saved-view checks cover applying, removing, duplicate filters, cross-tab updates and storage failure recovery. It also produces screenshots in `docs/`. The demo deployment runs these checks before publishing.
 
 ## Structure
 
 ```text
 src/domain/tickets.ts        Types, filters, updates and import contract
 src/domain/seed.ts           Fictional sample requests
+src/domain/views.ts          Named queue view validation
 src/useWorkspace.ts          Browser persistence and error reporting
 src/components/              Queue controls, table and dialogs
 src/App.tsx                  Queue state and workspace composition
@@ -66,6 +69,8 @@ Domain functions do not depend on React or browser APIs. Incoming data is valida
 ## Scope and tradeoffs
 
 The hosted demo is a frontend application. An optional loopback server provides SQLite snapshots for local use; it is described below. There is no sign-in, role-based access or external email delivery. Notes and status changes are records in this browser, not messages to real customers. Activity is useful local history, not a tamper-proof audit log.
+
+Saved views are browser preferences, separate from ticket export and server snapshots. Other tabs refresh through storage events, and edits read the latest stored list. This is not transactional storage: simultaneous writes from two tabs can still conflict. Damaged view data is kept rather than silently replaced.
 
 Storage is scoped to the origin and browser profile. Clearing site data removes it. Export before switching browsers. If saved data is unreadable, opening the app leaves those saved bytes intact; a visible warning accompanies the fallback sample workspace. Subsequent edits replace that local workspace. Storage write failures are also reported rather than silently treated as saved.
 

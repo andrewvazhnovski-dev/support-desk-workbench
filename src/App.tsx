@@ -1,5 +1,6 @@
 import { RequestTable } from "./components/RequestTable.tsx";
 import { QueueFilters } from "./components/QueueFilters.tsx";
+import { SavedViews } from "./components/SavedViews.tsx";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   addNote,
@@ -228,6 +229,7 @@ export default function App() {
             assignees={assignees}
             searchRef={searchRef}
           />
+          <SavedViews filters={filters} onApply={changeFilters} />
           {selected.length > 0 && (
             <div className="bulk-bar">
               <strong>{selected.length} selected</strong>
