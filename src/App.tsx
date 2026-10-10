@@ -35,6 +35,9 @@ export default function App() {
   const [message, setMessage] = useState("");
   const searchRef = useRef<HTMLInputElement>(null);
   const resetRef = useRef<HTMLDialogElement>(null);
+  const supportsServerSnapshots =
+    window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1";
   const openButtons = useRef(new Map<string, HTMLButtonElement>());
   const results = useMemo(
     () => filterTickets(tickets, filters),
@@ -168,7 +171,11 @@ export default function App() {
             <p>Triage requests, keep context and move work forward.</p>
           </div>
           <div className="header-actions">
-            <button onClick={() => setServerSnapshotOpen(true)}>Server snapshot</button>
+            {supportsServerSnapshots && (
+              <button onClick={() => setServerSnapshotOpen(true)}>
+                Server snapshot
+              </button>
+            )}
             <button onClick={() => setImporting(true)}>Import JSON</button>
             <button onClick={exportData}>
               Export workspace <span aria-hidden="true">↗</span>

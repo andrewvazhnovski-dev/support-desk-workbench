@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { createAppServer } from "../server/app.ts";
 import { mkdir, readFile } from "node:fs/promises";
+import { resolve } from "node:path";
 import { chromium } from "playwright";
 
 const server = createAppServer();
@@ -274,9 +275,24 @@ try {
   await apiPage.getByRole("button", { name: "Replace browser copy with server copy", exact: true }).click();
   assert.equal(await apiPage.getByRole("dialog").count(), 0);
   await apiPage.close();
+  // Serve the actual production build under a non-loopback origin, as on Pages.
+  // Static hosts must not advertise a local-only API action that returns 404.
+  const hosted = await browser.newPage();
+  hosted.on("pageerror", error => errors.push(error.message));
+  await hosted.route("https://demo.example.test/**", async route => {
+    const pathname = new URL(route.request().url()).pathname;
+    await route.fulfill({ path: resolve("dist", pathname === "/" ? "index.html" : pathname.slice(1)) });
+  });
+  await hosted.goto("https://demo.example.test/");
+  assert.equal(await hosted.getByRole("heading", { name: "Request queue" }).count(), 1);
+  assert.equal(await hosted.getByRole("button", { name: "Server snapshot", exact: true }).count(), 0);
+  await hosted.getByRole("button", { name: "Import JSON", exact: true }).click();
+  assert.equal(await hosted.getByRole("dialog").count(), 1);
+  await hosted.getByRole("button", { name: "Cancel", exact: true }).click();
+  await hosted.close();
   assert.deepEqual(errors, []);
   console.log(
-    "Browser smoke passed: pagination, URL filters, saved views (reload, apply, duplicate, removal, two tabs, corrupt and blocked storage), ticket editing, notes, focus, persistence, bulk update, empty state, import/export, reset, keyboard shortcut, mobile layout and server snapshots.",
+    "Browser smoke passed: pagination, URL filters, saved views (reload, apply, duplicate, removal, two tabs, corrupt and blocked storage), ticket editing, notes, focus, persistence, bulk update, empty state, import/export, reset, keyboard shortcut, mobile layout, server snapshots and static-host controls.",
   );
 } finally {
   await browser.close();

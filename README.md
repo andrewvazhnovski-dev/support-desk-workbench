@@ -82,6 +82,8 @@ For a shared service, the next step would be an API-backed repository, server-si
 
 The hosted GitHub Pages demo remains a browser-only workspace. The repository also includes a loopback Node.js server that serves the built frontend and stores a versioned workspace snapshot in SQLite. No account, external database or paid service is required.
 
+Server snapshot controls appear only on `localhost` or `127.0.0.1`. The public demo offers browser storage and JSON import/export; it does not advertise a server API that is unavailable on static hosting.
+
 ```sh
 npm ci
 npm run build
